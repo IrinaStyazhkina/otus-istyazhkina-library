@@ -48,12 +48,12 @@ public class GenreDaoJdbc implements GenreDao {
 
     @Override
     public Genre getById(long id) {
-        return jdbc.query("select * from genres where id=:id", singletonMap("id", id), new GenreMapper()).stream().findFirst().orElse(null);
+        return jdbc.query("select id, name from genres where id=:id", singletonMap("id", id), new GenreMapper()).stream().findFirst().orElse(null);
     }
 
     @Override
     public List<Genre> getAll() {
-        return jdbc.query("select * from genres", new GenreMapper());
+        return jdbc.query("select id, name from genres", new GenreMapper());
     }
 
     @Override
@@ -67,7 +67,7 @@ public class GenreDaoJdbc implements GenreDao {
 
     @Override
     public Genre getByName(String name) {
-        return jdbc.query("select * from genres where name=:name", singletonMap("name", name), new GenreMapper()).stream().findFirst().orElse(null);
+        return jdbc.query("select id, name from genres where name=:name", singletonMap("name", name), new GenreMapper()).stream().findFirst().orElse(null);
     }
 
     private static class GenreMapper implements RowMapper<Genre> {

@@ -39,12 +39,12 @@ public class AuthorDaoJdbc implements AuthorDao {
 
     @Override
     public Author getById(long id) {
-        return jdbc.query("select * from authors where id = :id", singletonMap("id", id), new AuthorMapper()).stream().findFirst().orElse(null);
+        return jdbc.query("select id, name, surname from authors where id = :id", singletonMap("id", id), new AuthorMapper()).stream().findFirst().orElse(null);
     }
 
     @Override
     public List<Author> getAll() {
-        return jdbc.query("select * from authors", new AuthorMapper());
+        return jdbc.query("select id, name, surname from authors", new AuthorMapper());
     }
 
     @Override
@@ -71,7 +71,7 @@ public class AuthorDaoJdbc implements AuthorDao {
 
     @Override
     public Author getByName(String name, String surname) {
-        return jdbc.query("select * from authors where name=:name AND surname=:surname", Map.of("name", name, "surname", surname), new AuthorMapper()).stream().findFirst().orElse(null);
+        return jdbc.query("select id, name, surname from authors where name=:name AND surname=:surname", Map.of("name", name, "surname", surname), new AuthorMapper()).stream().findFirst().orElse(null);
     }
 
     private static class AuthorMapper implements RowMapper<Author> {

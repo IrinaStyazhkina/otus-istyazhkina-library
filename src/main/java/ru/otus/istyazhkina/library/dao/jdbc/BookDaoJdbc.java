@@ -28,7 +28,7 @@ public class BookDaoJdbc implements BookDao {
 
     @Override
     public int count() {
-        return jdbc.getJdbcOperations().queryForObject("select count(*) from books", Integer.class);
+        return jdbc.getJdbcOperations().queryForObject("select count(id) from books", Integer.class);
     }
 
     @Override
@@ -59,7 +59,8 @@ public class BookDaoJdbc implements BookDao {
 
     @Override
     public Book getById(long id) {
-        return jdbc.query("select * from books " +
+        return jdbc.query("select books.id, books.title, books.author_id, authors.name, authors.surname, " +
+                "books.genre_id, genres.name from books " +
                 "inner join authors on books.author_id = authors.id " +
                 "inner join genres on books.genre_id = genres.id " +
                 "where books.id=:id", singletonMap("id", id), new BookMapper()).stream().findFirst().orElse(null);
@@ -67,7 +68,8 @@ public class BookDaoJdbc implements BookDao {
 
     @Override
     public Book getByTitle(String title) {
-        return jdbc.query("select * from books " +
+        return jdbc.query("select books.id, books.title, books.author_id, authors.name, authors.surname, " +
+                "books.genre_id, genres.name from books " +
                 "inner join authors on books.author_id = authors.id " +
                 "inner join genres on books.genre_id = genres.id " +
                 "where books.title=:title", singletonMap("title", title), new BookMapper()).stream().findFirst().orElse(null);
@@ -75,7 +77,8 @@ public class BookDaoJdbc implements BookDao {
 
     @Override
     public List<Book> getAll() {
-        return jdbc.query("select * from books " +
+        return jdbc.query("select books.id, books.title, books.author_id, authors.name, authors.surname, " +
+                        "books.genre_id, genres.name from books " +
                         "inner join authors on books.author_id = authors.id " +
                         "inner join genres on books.genre_id = genres.id",
                 new BookMapper());
