@@ -1,0 +1,88 @@
+package ru.otus.istyazhkina.library.shell;
+
+import lombok.AllArgsConstructor;
+import org.springframework.shell.standard.ShellComponent;
+import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellOption;
+import ru.otus.istyazhkina.library.domain.Author;
+import ru.otus.istyazhkina.library.exceptions.ConstraintException;
+import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
+import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.service.AuthorService;
+
+import java.util.List;
+
+@ShellComponent
+@AllArgsConstructor
+public class AuthorCommands {
+
+    private final AuthorService authorService;
+
+    @ShellMethod(value = "Get all authors from table", key = {"all authors"})
+    public String getAllAuthors() {
+        List<Author> allAuthors = authorService.getAllAuthors();
+        if (allAuthors.size() == 0) {
+            return "No data in table 'Authors'";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Author author : allAuthors) {
+            sb.append(String.format("%s\t|\t%s\t|\t%s\n", author.getId(), author.getName(), author.getSurname()));
+        }
+        return sb.toString();
+    }
+
+    @ShellMethod(value = "Get author by ID", key = {"author by id"})
+    public String getAuthorById(@ShellOption long id) {
+        Author author = authorService.getAuthorById(id);
+        if (author == null) return String.format("No author with id %s found", id);
+        return String.format("%s %s", author.getName(), author.getSurname());
+    }
+
+    @ShellMethod(value = "Get author's ID by his name and surname", key = {"author by name"})
+    public String getAuthorsId(@ShellOption String name, String surname) {
+        Author authorByName = authorService.getAuthorByName(name, surname);
+        if (authorByName == null) return String.format("No author with name %s %s found", name, surname);
+        return String.format("Author's id is %s", authorByName.getId());
+    }
+
+    @ShellMethod(value = "Add new author", key = {"add author"})
+    public String addNewAuthor(@ShellOption String name, String surname) {
+        try {
+            authorService.addNewAuthor(name, surname);
+            return String.format("Author with name %s %s successfully added!", name, surname);
+        } catch (DuplicateDataException e) {
+            return e.getMessage();
+        }
+    }
+
+    @ShellMethod(value = "Update name of an author by his ID", key = {"update author name"})
+    public String updateAuthorsName(@ShellOption long id, @ShellOption String newName) {
+        try {
+            Author author = authorService.updateAuthorsName(id, newName);
+            return String.format("Author with id %s successfully updated. Author's name is %s %s", author.getId(), author.getName(), author.getSurname());
+        } catch (DuplicateDataException | NoDataException e) {
+            return e.getMessage();
+        }
+    }
+
+    @ShellMethod(value = "Update surname of an author by his ID", key = {"update author surname"})
+    public String updateAuthorsSurname(@ShellOption long id, @ShellOption String newSurname) {
+        try {
+            Author author = authorService.updateAuthorsSurname(id, newSurname);
+            return String.format("Author with id %s successfully updated. Author's name is %s %s", author.getId(), author.getName(), author.getSurname());
+        } catch (DuplicateDataException | NoDataException e) {
+            return e.getMessage();
+        }
+    }
+
+    @ShellMethod(value = "Delete author by ID", key = {"delete author"})
+    public String deleteAuthorById(@ShellOption long id) {
+        try {
+            if (authorService.deleteAuthor(id) == 1) {
+                return "Author is successfully deleted!";
+            } else return "Sorry! We can not execute this operation!";
+        } catch (ConstraintException e) {
+            return e.getMessage();
+        }
+    }
+}
