@@ -5,9 +5,9 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.ConstraintException;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
+import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 import ru.otus.istyazhkina.library.service.AuthorService;
 
 import java.util.List;
@@ -33,16 +33,22 @@ public class AuthorCommands {
 
     @ShellMethod(value = "Get author by ID", key = {"author by id"})
     public String getAuthorById(@ShellOption long id) {
-        Author author = authorService.getAuthorById(id);
-        if (author == null) return String.format("No author with id %s found", id);
-        return String.format("%s %s", author.getName(), author.getSurname());
+        try {
+            Author author = authorService.getAuthorById(id);
+            return String.format("%s %s", author.getName(), author.getSurname());
+        } catch (NoEntityFoundInDataBaseException e) {
+            return e.getMessage();
+        }
     }
 
     @ShellMethod(value = "Get author's ID by his name and surname", key = {"author by name"})
     public String getAuthorsId(@ShellOption String name, String surname) {
-        Author authorByName = authorService.getAuthorByName(name, surname);
-        if (authorByName == null) return String.format("No author with name %s %s found", name, surname);
-        return String.format("Author's id is %s", authorByName.getId());
+        try {
+            Author authorByName = authorService.getAuthorByName(name, surname);
+            return String.format("Author's id is %s", authorByName.getId());
+        } catch (NoEntityFoundInDataBaseException e) {
+            return e.getMessage();
+        }
     }
 
     @ShellMethod(value = "Add new author", key = {"add author"})
@@ -50,27 +56,17 @@ public class AuthorCommands {
         try {
             authorService.addNewAuthor(name, surname);
             return String.format("Author with name %s %s successfully added!", name, surname);
-        } catch (DuplicateDataException e) {
+        } catch (SameEntityAlreadyExistsException e) {
             return e.getMessage();
         }
     }
 
-    @ShellMethod(value = "Update name of an author by his ID", key = {"update author name"})
-    public String updateAuthorsName(@ShellOption long id, @ShellOption String newName) {
+    @ShellMethod(value = "Update name of an author by his ID", key = {"update author"})
+    public String updateAuthor(@ShellOption long id, @ShellOption String newName, @ShellOption String newSurname) {
         try {
-            Author author = authorService.updateAuthorsName(id, newName);
+            Author author = authorService.updateAuthor(id, newName, newSurname);
             return String.format("Author with id %s successfully updated. Author's name is %s %s", author.getId(), author.getName(), author.getSurname());
-        } catch (DuplicateDataException | NoDataException e) {
-            return e.getMessage();
-        }
-    }
-
-    @ShellMethod(value = "Update surname of an author by his ID", key = {"update author surname"})
-    public String updateAuthorsSurname(@ShellOption long id, @ShellOption String newSurname) {
-        try {
-            Author author = authorService.updateAuthorsSurname(id, newSurname);
-            return String.format("Author with id %s successfully updated. Author's name is %s %s", author.getId(), author.getName(), author.getSurname());
-        } catch (DuplicateDataException | NoDataException e) {
+        } catch (SameEntityAlreadyExistsException | NoEntityFoundInDataBaseException e) {
             return e.getMessage();
         }
     }
@@ -80,8 +76,9 @@ public class AuthorCommands {
         try {
             if (authorService.deleteAuthor(id) == 1) {
                 return "Author is successfully deleted!";
-            } else return "Sorry! We can not execute this operation!";
-        } catch (ConstraintException e) {
+            }
+            return "Deletion is not successful. Please check if provided author id exists";
+        } catch (ProhibitedDeletionException | NoEntityFoundInDataBaseException e) {
             return e.getMessage();
         }
     }

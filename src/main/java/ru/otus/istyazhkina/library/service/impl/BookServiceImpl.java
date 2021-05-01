@@ -2,15 +2,15 @@ package ru.otus.istyazhkina.library.service.impl;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.dao.BookDao;
+import ru.otus.istyazhkina.library.dao.GenreDao;
 import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
-import ru.otus.istyazhkina.library.service.AuthorService;
+import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 import ru.otus.istyazhkina.library.service.BookService;
-import ru.otus.istyazhkina.library.service.GenreService;
 
 import java.util.List;
 
@@ -19,58 +19,68 @@ import java.util.List;
 public class BookServiceImpl implements BookService {
 
     private final BookDao bookDao;
-    private final AuthorService authorService;
-    private final GenreService genreService;
+    private final AuthorDao authorDao;
+    private final GenreDao genreDao;
 
     @Override
+    @Transactional(readOnly = true)
     public long getBooksCount() {
         return bookDao.count();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Book> getAllBooks() {
         return bookDao.getAll();
     }
 
     @Override
-    public Book getBookById(long id) {
-        return bookDao.getById(id);
+    @Transactional(readOnly = true)
+    public Book getBookById(long id) throws NoEntityFoundInDataBaseException {
+        return bookDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Book by provided ID not found in database"));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Book getBookByName(String name) {
         return bookDao.getByTitle(name);
     }
 
     @Override
-    public Book addNewBook(String bookTitle, String authorName, String authorSurname, String genreName) throws DuplicateDataException {
-        if (authorService.getAuthorByName(authorName, authorSurname) == null) {
-            authorService.addNewAuthor(authorName, authorSurname);
+    @Transactional
+    public Book addNewBook(String bookTitle, String authorName, String authorSurname, String genreName) {
+        Author author;
+        Genre genre;
+        try {
+            author = authorDao.getByName(authorName, authorSurname);
+        } catch (NoEntityFoundInDataBaseException e) {
+            authorDao.insert(new Author(authorName, authorSurname));
+            author = authorDao.getByName(authorName, authorSurname);
         }
 
-        if (genreService.getGenreByName(genreName) == null) {
-            genreService.addNewGenre(genreName);
+        try {
+            genre = genreDao.getByName(genreName);
+        } catch (NoEntityFoundInDataBaseException e) {
+            genreDao.insert(new Genre(genreName));
+            genre = genreDao.getByName(genreName);
         }
-
-        Author author = authorService.getAuthorByName(authorName, authorSurname);
-        Genre genre = genreService.getGenreByName(genreName);
         Book book = new Book(bookTitle, author, genre);
         bookDao.insert(book);
-        return getBookByName(bookTitle);
+        return bookDao.getByTitle(bookTitle);
     }
 
+
     @Override
-    public Book updateBookTitle(long id, String newTitle) throws NoDataException, DuplicateDataException {
-        Book bookToUpdate = bookDao.getById(id);
-        if (bookToUpdate == null) {
-            throw new NoDataException("Can not update book's title because book with this id is not found");
-        }
+    @Transactional
+    public Book updateBookTitle(long id, String newTitle) throws NoEntityFoundInDataBaseException {
+        Book bookToUpdate = bookDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Book by provided ID not found in database"));
         bookToUpdate.setTitle(newTitle);
         bookDao.update(bookToUpdate);
-        return bookDao.getById(id);
+        return bookDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Book by provided ID not found in database"));
     }
 
     @Override
+    @Transactional
     public int deleteBookById(long id) {
         return bookDao.deleteById(id);
     }

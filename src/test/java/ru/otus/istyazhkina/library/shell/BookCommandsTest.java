@@ -8,9 +8,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.shell.Shell;
 import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
+import ru.otus.istyazhkina.library.domain.Comment;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import java.util.Collections;
@@ -46,23 +46,36 @@ class BookCommandsTest {
 
     @Test
     void checkMessageWhileGettingBookByNotExistingId() {
-        Mockito.when(bookService.getBookById(1)).thenReturn(null);
+        Mockito.when(bookService.getBookById(1)).thenThrow(new NoEntityFoundInDataBaseException("Book by provided ID not found in database"));
         Object res = shell.evaluate(() -> "book by id 1");
-        assertThat(res).isEqualTo("Book with id 1 is not found");
+        assertThat(res).isEqualTo("Book by provided ID not found in database");
+    }
+
+    @Test
+    void shouldReturnBooksWithAllComments() {
+        Book book1 = new Book(1L, "Anna Karenina", new Author(1L, "Lev", "Tolstoy"), new Genre(2L, "novel"));
+        Book book2 = new Book(2L, "Harry Potter", new Author(2L, "Joanne", "Rowling"), new Genre(1L, "fantasy"));
+        List<Comment> firstBookComments = List.of(new Comment(1L, "Russian classics", book1), new Comment(2L, "Golden collection", book1));
+        book1.setComments(firstBookComments);
+        book2.setComments(Collections.emptyList());
+        Mockito.when(bookService.getAllBooks()).thenReturn(List.of(book1, book2));
+        Object res = shell.evaluate(() -> "all books with comments");
+        assertThat(res).isEqualTo("1\t|\tAnna Karenina\t|\tLev Tolstoy\t|\tnovel\tComments:\tRussian classics\tGolden collection\t\n" +
+                "2\t|\tHarry Potter\t|\tJoanne Rowling\t|\tfantasy\tComments:\t\n");
     }
 
     @Test
     void shouldReturnBookNameById() {
         Mockito.when(bookService.getBookById(2)).thenReturn(new Book(2L, "Harry Potter", new Author(2L, "Joanne", "Rowling"), new Genre(1L, "fantasy")));
         Object res = shell.evaluate(() -> "book by id 2");
-        assertThat(res).isEqualTo("Harry Potter by Joanne Rowling");
+        assertThat(res).isEqualTo("Harry Potter");
     }
 
     @Test
     void checkMessageWhileGettingBookByNotExistingTitle() {
-        Mockito.when(bookService.getBookByName("not_found")).thenReturn(null);
+        Mockito.when(bookService.getBookByName("not_found")).thenThrow(new NoEntityFoundInDataBaseException("No Book found by title not_found"));
         Object res = shell.evaluate(() -> "book by title not_found");
-        assertThat(res).isEqualTo("Book with title not_found is not found");
+        assertThat(res).isEqualTo("No Book found by title not_found");
     }
 
     @Test
@@ -94,13 +107,6 @@ class BookCommandsTest {
         assertThat(res).isEqualTo("Book with title 1984 successfully added!");
     }
 
-    @Test
-    void checkMessageOnDuplicateDataExceptionWhileAdd() {
-        DuplicateDataException e = new DuplicateDataException("Could not insert data in table, because book should be unique!");
-        Mockito.when(bookService.addNewBook("Childhood", "Lev", "Tolstoy", "novel")).thenThrow(e);
-        Object res = shell.evaluate(() -> "add book Childhood Lev Tolstoy novel");
-        assertThat(res).isEqualTo(e.getMessage());
-    }
 
     @Test
     void checkMessageOnUpDateBook() {
@@ -112,7 +118,7 @@ class BookCommandsTest {
 
     @Test
     void checkMessageOnExceptionWhileUpdate() {
-        NoDataException e = new NoDataException("Can not update book's title because book with this id is not found");
+        NoEntityFoundInDataBaseException e = new NoEntityFoundInDataBaseException("Book by provided ID not found in database");
         Mockito.when(bookService.updateBookTitle(3L, "exception")).thenThrow(e);
         Object res = shell.evaluate(() -> "update book title 3 exception");
         assertThat(res).isEqualTo(e.getMessage());
