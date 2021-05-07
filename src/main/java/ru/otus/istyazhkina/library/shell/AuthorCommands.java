@@ -5,9 +5,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
-import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
-import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.AuthorService;
 
 import java.util.List;
@@ -36,7 +34,7 @@ public class AuthorCommands {
         try {
             Author author = authorService.getAuthorById(id);
             return String.format("%s %s", author.getName(), author.getSurname());
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -46,7 +44,7 @@ public class AuthorCommands {
         try {
             Author authorByName = authorService.getAuthorByName(name, surname);
             return String.format("Author's id is %s", authorByName.getId());
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -56,7 +54,7 @@ public class AuthorCommands {
         try {
             authorService.addNewAuthor(name, surname);
             return String.format("Author with name %s %s successfully added!", name, surname);
-        } catch (SameEntityAlreadyExistsException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -66,7 +64,7 @@ public class AuthorCommands {
         try {
             Author author = authorService.updateAuthor(id, newName, newSurname);
             return String.format("Author with id %s successfully updated. Author's name is %s %s", author.getId(), author.getName(), author.getSurname());
-        } catch (SameEntityAlreadyExistsException | NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -78,7 +76,7 @@ public class AuthorCommands {
                 return "Author is successfully deleted!";
             }
             return "Deletion is not successful. Please check if provided author id exists";
-        } catch (ProhibitedDeletionException | NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }

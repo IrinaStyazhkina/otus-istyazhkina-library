@@ -1,10 +1,10 @@
 package ru.otus.istyazhkina.library.dao.jpa;
 
 import lombok.AllArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Repository;
 import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
 import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 
@@ -24,11 +24,13 @@ public class AuthorDaoJpa implements AuthorDao {
     private EntityManager em;
 
     @Override
-    public void insert(Author author) throws SameEntityAlreadyExistsException {
+    public void insert(Author author) {
         try {
             em.persist(author);
         } catch (PersistenceException e) {
-            throw new SameEntityAlreadyExistsException("Author with this name and surname already exists in database");
+            throw e.getCause() instanceof ConstraintViolationException
+                    ? new SameEntityAlreadyExistsException("Author with this name and surname already exists in database")
+                    : e;
         }
     }
 
@@ -43,34 +45,38 @@ public class AuthorDaoJpa implements AuthorDao {
     }
 
     @Override
-    public Author update(Author author) throws SameEntityAlreadyExistsException {
+    public Author update(Author author) {
         try {
             Author mergedAuthor = em.merge(author);
             em.flush();
             return mergedAuthor;
         } catch (PersistenceException e) {
-            throw new SameEntityAlreadyExistsException("Can not update author because author with provided name and surname already exists in database");
+            throw e.getCause() instanceof ConstraintViolationException
+                    ? new SameEntityAlreadyExistsException("Can not update author because author with provided name and surname already exists in database")
+                    : e;
         }
     }
 
     @Override
-    public int deleteAuthor(long id) throws ProhibitedDeletionException {
+    public int deleteAuthor(long id) {
         try {
             return em.createQuery("delete from Author a where a.id = :id").setParameter("id", id).executeUpdate();
         } catch (PersistenceException e) {
-            throw new ProhibitedDeletionException("This operation is not allowed! In system exists book with this author");
+            throw e.getCause() instanceof ConstraintViolationException
+                    ? new ProhibitedDeletionException("This operation is not allowed! In system exists book with this author")
+                    : e;
         }
     }
 
     @Override
-    public Author getByName(String name, String surname) throws NoEntityFoundInDataBaseException {
+    public Optional<Author> getByName(String name, String surname) {
         TypedQuery<Author> query = em.createQuery("select a from Author a where a.name=:name and a.surname=:surname", Author.class);
         query.setParameter("name", name);
         query.setParameter("surname", surname);
         try {
-            return query.getSingleResult();
+            return Optional.ofNullable(query.getSingleResult());
         } catch (NoResultException e) {
-            throw new NoEntityFoundInDataBaseException("No Author found by name " + name + " " + surname);
+            return Optional.empty();
         }
     }
 }

@@ -1,7 +1,6 @@
 package ru.otus.istyazhkina.library.dao;
 
 import ru.otus.istyazhkina.library.domain.Book;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +15,7 @@ public interface BookDao {
 
     Optional<Book> getById(long id);
 
-    Book getByTitle(String title) throws NoEntityFoundInDataBaseException;
+    List<Book> getByTitle(String title);
 
     List<Book> getAll();
 

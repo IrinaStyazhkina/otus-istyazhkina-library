@@ -34,7 +34,7 @@ class CommentDaoJpaTest {
     }
 
     @Test
-    void shouldReturnNullIfCommentByIdNotExists() {
+    void shouldReturnEmptyOptionalIfCommentByIdNotExists() {
         Optional<Comment> comment = commentDao.getById(10);
         assertThat(comment).isEmpty();
     }

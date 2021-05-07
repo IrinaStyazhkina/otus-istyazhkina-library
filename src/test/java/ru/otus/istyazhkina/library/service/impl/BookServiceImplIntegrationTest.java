@@ -7,31 +7,29 @@ import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.dao.BookDao;
 import ru.otus.istyazhkina.library.dao.GenreDao;
 import ru.otus.istyazhkina.library.domain.Book;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class BookServiceImplIntegrationTest {
 
     @Autowired
-    BookService bookService;
+    private BookService bookService;
 
     @Autowired
-    BookDao bookDao;
+    private BookDao bookDao;
 
     @Autowired
-    GenreDao genreDao;
+    private GenreDao genreDao;
 
     @Autowired
-    AuthorDao authorDao;
+    private AuthorDao authorDao;
 
     @Test
     void shouldAddAuthorAndGenreAndBookWhileInsertIfTheyNotExist() {
-        assertThatThrownBy(() -> genreDao.getByName("play")).isInstanceOf(NoEntityFoundInDataBaseException.class);
-        assertThatThrownBy(() -> authorDao.getByName("Anton", "Chekhov")).isInstanceOf(NoEntityFoundInDataBaseException.class);
+        assertThat(genreDao.getByName("play")).isEmpty();
+        assertThat(authorDao.getByName("Anton", "Chekhov")).isEmpty();
 
         Book book = bookService.addNewBook("Seagull", "Anton", "Chekhov", "play");
         assertThat(genreDao.getByName("play")).isNotNull();

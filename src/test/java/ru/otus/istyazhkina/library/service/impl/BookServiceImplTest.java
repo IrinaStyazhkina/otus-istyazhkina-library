@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.otus.istyazhkina.library.dao.BookDao;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import java.util.Optional;
@@ -24,10 +24,10 @@ class BookServiceImplTest {
     private BookService bookService;
 
     @Test
-    void shouldThrowNoDataExceptionWhileUpdateTitleIfIdNotExists() {
+    void shouldThrowDataOperationExceptionWhileUpdateTitleIfIdNotExists() {
         Mockito.when(bookDao.getById(1)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> bookService.updateBookTitle(1, "Random_Title"))
-                .isInstanceOf(NoEntityFoundInDataBaseException.class)
+                .isInstanceOf(DataOperationException.class)
                 .hasMessage("Book by provided ID not found in database");
     }
 

@@ -10,13 +10,11 @@ import ru.otus.istyazhkina.library.dao.BookDao;
 import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Import(BookDaoJpa.class)
@@ -31,26 +29,24 @@ class BookDaoJpaTest {
     @Test
     void shouldReturnBookForExistingId() {
         Optional<Book> book = bookDao.getById(1);
-        assertThat(book.get()).isEqualTo(new Book(1L, "War and Peace", new Author(1L, "Lev", "Tolstoy"), new Genre(1L, "novel")));
+        assertThat(book).get().isEqualTo(new Book(1L, "War and Peace", new Author(1L, "Lev", "Tolstoy"), new Genre(1L, "novel")));
     }
 
     @Test
-    void shouldReturnNullIfBookByIdNotExists() {
+    void shouldReturnEmptyOptionalIfBookByIdNotExists() {
         Optional<Book> book = bookDao.getById(10);
         assertThat(book).isEmpty();
     }
 
     @Test
     void shouldReturnBookForExistingTitle() {
-        Book book = bookDao.getByTitle("War and Peace");
-        assertThat(book).isEqualTo(new Book(1L, "War and Peace", new Author(1L, "Lev", "Tolstoy"), new Genre(1L, "novel")));
+        List<Book> books = bookDao.getByTitle("War and Peace");
+        assertThat(books).contains(new Book(1L, "War and Peace", new Author(1L, "Lev", "Tolstoy"), new Genre(1L, "novel")));
     }
 
     @Test
-    void shouldReturnNullIfBookByTitleNotExists() {
-        assertThatThrownBy(() -> bookDao.getByTitle("Unknown"))
-                .isInstanceOf(NoEntityFoundInDataBaseException.class)
-                .hasMessage("No Book found by title Unknown");
+    void shouldReturnEmptyListIfBookByTitleNotExists() {
+        assertThat(bookDao.getByTitle("Unknown")).isEmpty();
     }
 
     @Test

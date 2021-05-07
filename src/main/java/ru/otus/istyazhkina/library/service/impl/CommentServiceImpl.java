@@ -7,7 +7,7 @@ import ru.otus.istyazhkina.library.dao.BookDao;
 import ru.otus.istyazhkina.library.dao.CommentDao;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Comment;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.CommentService;
 
 import java.util.List;
@@ -27,26 +27,26 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Comment getCommentById(long id) throws NoEntityFoundInDataBaseException {
-        return commentDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Comment by provided ID not found in database"));
+    public Comment getCommentById(long id) throws DataOperationException {
+        return commentDao.getById(id).orElseThrow(() -> new DataOperationException("Comment by provided ID not found in database"));
     }
 
     @Override
-    @Transactional
-    public Comment addNewComment(String content, long bookId) throws NoEntityFoundInDataBaseException {
-        Book book = bookDao.getById(bookId).orElseThrow(() -> new NoEntityFoundInDataBaseException("Can not add new Comment. Book by provided id is not found!"));
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Comment addNewComment(String content, long bookId) throws DataOperationException {
+        Book book = bookDao.getById(bookId).orElseThrow(() -> new DataOperationException("Can not add new Comment. Book by provided id is not found!"));
         Comment comment = new Comment(content, book);
         commentDao.insert(new Comment(content, book));
         return comment;
     }
 
     @Override
-    @Transactional
-    public Comment updateCommentContent(long id, String newContent) throws NoEntityFoundInDataBaseException {
-        Comment commentToUpdate = commentDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Can not update comment. Comment by provided ID not found in database."));
-        commentToUpdate.setContent(newContent);
-        commentDao.update(commentToUpdate);
-        return commentDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Unexpected error while getting data from database"));
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Comment updateCommentContent(long id, String newContent) throws DataOperationException {
+        Comment comment = commentDao.getById(id).orElseThrow(() -> new DataOperationException("Can not update comment. Comment by provided ID not found in database."));
+        comment.setContent(newContent);
+        commentDao.update(comment);
+        return comment;
     }
 
     @Override

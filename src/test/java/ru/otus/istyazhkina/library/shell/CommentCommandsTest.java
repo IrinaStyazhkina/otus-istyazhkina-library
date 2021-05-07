@@ -10,7 +10,7 @@ import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Comment;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.CommentService;
 
 import java.util.Collections;
@@ -44,15 +44,15 @@ class CommentCommandsTest {
     }
 
     @Test
-    void checkMessageWhileGettingCommentByNotExistingId() {
-        NoEntityFoundInDataBaseException e = new NoEntityFoundInDataBaseException("Comment by provided ID not found in database");
+    void checkMessageWhileGettingCommentByNotExistingId() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Comment by provided ID not found in database");
         Mockito.when(commentService.getCommentById(1)).thenThrow(e);
         Object res = shell.evaluate(() -> "comment by id 1");
         assertThat(res).isEqualTo(e.getMessage());
     }
 
     @Test
-    void shouldReturnCommentById() {
+    void shouldReturnCommentById() throws DataOperationException {
         Mockito.when(commentService.getCommentById(2)).thenReturn(new Comment(2L, "test comment", existingBook));
         Object res = shell.evaluate(() -> "comment by id 2");
         assertThat(res).isEqualTo("test comment");
@@ -73,22 +73,22 @@ class CommentCommandsTest {
     }
 
     @Test
-    void checkMessageWhileAddingNewComment() {
+    void checkMessageWhileAddingNewComment() throws DataOperationException {
         Mockito.when(commentService.addNewComment("test", 1L)).thenReturn(new Comment("test", existingBook));
         Object res = shell.evaluate(() -> "add comment test 1");
         assertThat(res).isEqualTo("Comment successfully added!");
     }
 
     @Test
-    void checkMessageWhileAddingNewCommentForNotExistingBook() {
-        NoEntityFoundInDataBaseException e = new NoEntityFoundInDataBaseException("Can not add new Comment. Book by provided id is not found!\"");
+    void checkMessageWhileAddingNewCommentForNotExistingBook() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Can not add new Comment. Book by provided id is not found!\"");
         Mockito.when(commentService.addNewComment("test", 30L)).thenThrow(e);
         Object res = shell.evaluate(() -> "add comment test 30");
         assertThat(res).isEqualTo(e.getMessage());
     }
 
     @Test
-    void checkMessageOnUpdateComment() {
+    void checkMessageOnUpdateComment() throws DataOperationException {
         Comment comment = new Comment(2L, "test_comment", existingBook);
         Mockito.when(commentService.updateCommentContent(2L, "test_comment")).thenReturn(comment);
         Object res = shell.evaluate(() -> "update comment 2 test_comment");
@@ -96,8 +96,8 @@ class CommentCommandsTest {
     }
 
     @Test
-    void checkMessageOnExceptionWhileUpdate() {
-        NoEntityFoundInDataBaseException e = new NoEntityFoundInDataBaseException("Can not update comment. Comment by provided ID not found in database.");
+    void checkMessageOnExceptionWhileUpdate() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Can not update comment. Comment by provided ID not found in database.");
         Mockito.when(commentService.updateCommentContent(3L, "test")).thenThrow(e);
         Object res = shell.evaluate(() -> "update comment 3 test");
         assertThat(res).isEqualTo(e.getMessage());

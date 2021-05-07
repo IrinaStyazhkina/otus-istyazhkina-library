@@ -1,24 +1,21 @@
 package ru.otus.istyazhkina.library.dao;
 
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
-import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
-import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface GenreDao {
 
-    void insert(Genre genre) throws SameEntityAlreadyExistsException;
+    void insert(Genre genre);
 
-    Genre update(Genre genre) throws SameEntityAlreadyExistsException;
+    Genre update(Genre genre);
 
     Optional<Genre> getById(long id);
 
     List<Genre> getAll();
 
-    int deleteGenre(long id) throws ProhibitedDeletionException;
+    int deleteGenre(long id);
 
-    Genre getByName(String name) throws NoEntityFoundInDataBaseException;
+    Optional<Genre> getByName(String name);
 }

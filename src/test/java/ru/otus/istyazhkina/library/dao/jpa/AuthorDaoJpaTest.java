@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
 import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 
@@ -26,31 +25,31 @@ class AuthorDaoJpaTest {
     private AuthorDao authorDao;
 
     @Autowired
-    TestEntityManager testEntityManager;
+    private TestEntityManager testEntityManager;
 
     @Test
     void shouldReturnAuthorForExistingId() {
         Optional<Author> author = authorDao.getById(1);
-        assertThat(author.get()).isEqualTo(new Author(1L, "Lev", "Tolstoy"));
+        assertThat(author).get().isEqualTo(new Author(1L, "Lev", "Tolstoy"));
     }
 
     @Test
-    void shouldReturnNullIfAuthorByIdNotExists() {
+    void shouldReturnEmptyOptionalIfAuthorByIdNotExists() {
         Optional<Author> author = authorDao.getById(10);
         assertThat(author).isEmpty();
     }
 
     @Test
     void shouldReturnAuthorForExistingName() {
-        Author authorByName = authorDao.getByName("Lev", "Tolstoy");
-        assertThat(authorByName).isEqualTo(new Author(1L, "Lev", "Tolstoy"));
+        Optional<Author> authorByName = authorDao.getByName("Lev", "Tolstoy");
+        assertThat(authorByName).get().isEqualTo(new Author(1L, "Lev", "Tolstoy"));
     }
 
     @Test
-    void shouldThrowNoEntityFoundInDataBaseExceptionIfAuthorByNameNotExists() {
-        assertThatThrownBy(() -> authorDao.getByName("Ivan", "Ivanov"))
-                .isInstanceOf(NoEntityFoundInDataBaseException.class)
-                .hasMessage("No Author found by name Ivan Ivanov");
+    void shouldThrowReturnEmptyOptionalIfAuthorByNameNotExists() {
+        Optional<Author> author = authorDao.getByName("Ivan", "Ivanov");
+        assertThat(author).isEmpty();
+
     }
 
     @Test

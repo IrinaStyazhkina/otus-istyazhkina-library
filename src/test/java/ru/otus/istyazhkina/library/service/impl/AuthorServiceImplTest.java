@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.otus.istyazhkina.library.dao.AuthorDao;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.AuthorService;
 
 import java.util.Optional;
@@ -24,11 +24,10 @@ class AuthorServiceImplTest {
     private AuthorService authorService;
 
     @Test
-    void shouldThrowNoDataExceptionWhileUpdateNameIfIdNotExists() {
+    void shouldThrowDataOperationExceptionWhileUpdateNameIfIdNotExists() {
         Mockito.when(authorDao.getById(1)).thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> authorService.updateAuthor(1, "Random_Name", "Random Surname"))
-                .isInstanceOf(NoEntityFoundInDataBaseException.class)
+                .isInstanceOf(DataOperationException.class)
                 .hasMessage("Can not update author. Author by provided ID not found in database.");
     }
 }

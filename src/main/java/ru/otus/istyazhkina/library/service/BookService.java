@@ -1,7 +1,7 @@
 package ru.otus.istyazhkina.library.service;
 
 import ru.otus.istyazhkina.library.domain.Book;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 
 import java.util.List;
 
@@ -11,13 +11,13 @@ public interface BookService {
 
     List<Book> getAllBooks();
 
-    Book getBookById(long id) throws NoEntityFoundInDataBaseException;
+    Book getBookById(long id) throws DataOperationException;
 
-    Book getBookByName(String name) throws NoEntityFoundInDataBaseException;
+    List<Book> getBooksByTitle(String name);
 
     Book addNewBook(String bookTitle, String authorName, String authorSurname, String genreName);
 
-    Book updateBookTitle(long id, String newTitle) throws NoEntityFoundInDataBaseException;
+    Book updateBookTitle(long id, String newTitle) throws DataOperationException;
 
     int deleteBookById(long id);
 }

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.otus.istyazhkina.library.dao.GenreDao;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
 import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 import ru.otus.istyazhkina.library.service.GenreService;
@@ -26,35 +26,48 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     @Transactional(readOnly = true)
-    public Genre getGenreById(long id) throws NoEntityFoundInDataBaseException {
-        return genreDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Genre by provided ID not found in database"));
+    public Genre getGenreById(long id) throws DataOperationException {
+        return genreDao.getById(id).orElseThrow(() -> new DataOperationException("No genre found by provided id"));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Genre getGenreByName(String name) throws NoEntityFoundInDataBaseException {
-        return genreDao.getByName(name);
+    public Genre getGenreByName(String name) throws DataOperationException {
+        return genreDao.getByName(name).orElseThrow(() -> new DataOperationException("No genre found by provided name"));
     }
 
     @Override
-    @Transactional
-    public Genre addNewGenre(String name) throws SameEntityAlreadyExistsException {
-        genreDao.insert(new Genre(name));
-        return genreDao.getByName(name);
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Genre addNewGenre(String name) throws DataOperationException {
+        try {
+            Genre genre = new Genre(name);
+            genreDao.insert(genre);
+            return genre;
+        } catch (SameEntityAlreadyExistsException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
     }
 
     @Override
-    @Transactional
-    public Genre updateGenresName(long id, String newName) throws NoEntityFoundInDataBaseException, SameEntityAlreadyExistsException {
-        Genre genreToUpdate = genreDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Can not update genre. Genre by provided ID not found in database."));
-        genreToUpdate.setName(newName);
-        genreDao.update(genreToUpdate);
-        return genreDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Unexpected error while getting data from database"));
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Genre updateGenresName(long id, String newName) throws DataOperationException {
+        Genre genre = genreDao.getById(id).orElseThrow(() -> new DataOperationException("Can not update genre. Genre by provided ID not found in database."));
+        genre.setName(newName);
+        try {
+            genreDao.update(genre);
+        } catch (SameEntityAlreadyExistsException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
+        return genre;
     }
 
     @Override
-    @Transactional
-    public int deleteGenre(long id) throws ProhibitedDeletionException {
-        return genreDao.deleteGenre(id);
+    @Transactional(rollbackFor = DataOperationException.class)
+    public int deleteGenre(long id) throws DataOperationException {
+        try {
+            return genreDao.deleteGenre(id);
+        } catch (ProhibitedDeletionException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
 import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 import ru.otus.istyazhkina.library.service.AuthorService;
@@ -26,36 +26,49 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     @Transactional(readOnly = true)
-    public Author getAuthorById(long id) throws NoEntityFoundInDataBaseException {
-        return authorDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Author by provided ID not found in database"));
+    public Author getAuthorById(long id) throws DataOperationException {
+        return authorDao.getById(id).orElseThrow(() -> new DataOperationException("Author by provided ID not found in database"));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Author getAuthorByName(String name, String surname) throws NoEntityFoundInDataBaseException {
-        return authorDao.getByName(name, surname);
+    public Author getAuthorByName(String name, String surname) throws DataOperationException {
+        return authorDao.getByName(name, surname).orElseThrow(() -> new DataOperationException("No author found by provided name"));
     }
 
     @Override
-    @Transactional
-    public Author addNewAuthor(String name, String surname) throws SameEntityAlreadyExistsException {
-        authorDao.insert(new Author(name, surname));
-        return authorDao.getByName(name, surname);
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Author addNewAuthor(String name, String surname) throws DataOperationException {
+        try {
+            Author author = new Author(name, surname);
+            authorDao.insert(author);
+            return author;
+        } catch (SameEntityAlreadyExistsException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
     }
 
     @Override
-    @Transactional
-    public Author updateAuthor(long id, String newName, String newSurname) throws NoEntityFoundInDataBaseException, SameEntityAlreadyExistsException {
-        Author author = authorDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Can not update author. Author by provided ID not found in database."));
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Author updateAuthor(long id, String newName, String newSurname) throws DataOperationException {
+        Author author = authorDao.getById(id).orElseThrow(() -> new DataOperationException("Can not update author. Author by provided ID not found in database."));
         author.setName(newName);
         author.setSurname(newSurname);
-        authorDao.update(author);
-        return authorDao.getById(id).orElseThrow(() -> new NoEntityFoundInDataBaseException("Unexpected error while getting data from database"));
+        try {
+            authorDao.update(author);
+        } catch (SameEntityAlreadyExistsException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
+        return author;
     }
 
     @Override
-    @Transactional
-    public int deleteAuthor(long id) throws ProhibitedDeletionException, NoEntityFoundInDataBaseException {
-        return authorDao.deleteAuthor(id);
+    @Transactional(rollbackFor = DataOperationException.class)
+    public int deleteAuthor(long id) throws DataOperationException {
+        try {
+            return authorDao.deleteAuthor(id);
+        } catch (ProhibitedDeletionException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
     }
 }

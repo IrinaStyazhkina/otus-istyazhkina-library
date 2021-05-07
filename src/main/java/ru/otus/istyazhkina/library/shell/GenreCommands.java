@@ -5,9 +5,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
-import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
-import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.GenreService;
 
 import java.util.List;
@@ -36,7 +34,7 @@ public class GenreCommands {
         try {
             Genre genre = genreService.getGenreById(id);
             return genre.getName();
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -46,7 +44,7 @@ public class GenreCommands {
         try {
             Genre genre = genreService.updateGenresName(id, newName);
             return String.format("Genre with id %s successfully updated. Genre name is %s", genre.getId(), genre.getName());
-        } catch (NoEntityFoundInDataBaseException | SameEntityAlreadyExistsException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
 
@@ -57,7 +55,7 @@ public class GenreCommands {
         try {
             genreService.addNewGenre(name);
             return String.format("Genre with name %s successfully added!", name);
-        } catch (SameEntityAlreadyExistsException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -67,7 +65,7 @@ public class GenreCommands {
         try {
             Genre genreByName = genreService.getGenreByName(name);
             return String.format("Genre's id is %s", genreByName.getId());
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -79,7 +77,7 @@ public class GenreCommands {
                 return "Genre is successfully deleted!";
             }
             return "Deletion is not successful. Please check if provided genre id exists";
-        } catch (ProhibitedDeletionException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }

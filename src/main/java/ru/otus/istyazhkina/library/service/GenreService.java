@@ -1,9 +1,7 @@
 package ru.otus.istyazhkina.library.service;
 
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
-import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
-import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 
 import java.util.List;
 
@@ -11,13 +9,13 @@ public interface GenreService {
 
     List<Genre> getAllGenres();
 
-    Genre getGenreById(long id) throws NoEntityFoundInDataBaseException;
+    Genre getGenreById(long id) throws DataOperationException;
 
-    Genre getGenreByName(String name) throws NoEntityFoundInDataBaseException;
+    Genre getGenreByName(String name) throws DataOperationException;
 
-    Genre addNewGenre(String name) throws SameEntityAlreadyExistsException;
+    Genre addNewGenre(String name) throws DataOperationException;
 
-    Genre updateGenresName(long id, String newName) throws NoEntityFoundInDataBaseException, SameEntityAlreadyExistsException;
+    Genre updateGenresName(long id, String newName) throws DataOperationException;
 
-    int deleteGenre(long id) throws ProhibitedDeletionException;
+    int deleteGenre(long id) throws DataOperationException;
 }

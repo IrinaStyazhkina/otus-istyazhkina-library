@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.otus.istyazhkina.library.dao.GenreDao;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
 import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 
@@ -23,34 +22,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GenreDaoJpaTest {
 
     @Autowired
-    GenreDao genreDao;
+    private GenreDao genreDao;
 
     @Autowired
-    TestEntityManager testEntityManager;
+    private TestEntityManager testEntityManager;
 
     @Test
     void shouldReturnGenreForExistingId() {
         Optional<Genre> genre = genreDao.getById(1);
-        assertThat(genre.get()).isEqualTo(new Genre(1L, "novel"));
+        assertThat(genre).get().isEqualTo(new Genre(1L, "novel"));
     }
 
     @Test
-    void shouldReturnNullIfGenreByIdNotExists() {
+    void shouldReturnEmptyOptionalIfGenreByIdNotExists() {
         Optional<Genre> genre = genreDao.getById(10);
         assertThat(genre).isEmpty();
     }
 
     @Test
     void shouldReturnGenreForExistingName() {
-        Genre genreByName = genreDao.getByName("novel");
-        assertThat(genreByName).isEqualTo(new Genre(1L, "novel"));
+        Optional<Genre> genreByName = genreDao.getByName("novel");
+        assertThat(genreByName).get().isEqualTo(new Genre(1L, "novel"));
     }
 
     @Test
-    void shouldThrowNoEntityFoundInDataBaseExceptionIfGenreByNameNotExists() {
-        assertThatThrownBy(() -> genreDao.getByName("novel123"))
-                .isInstanceOf(NoEntityFoundInDataBaseException.class)
-                .hasMessage("No Genre found by name novel123");
+    void shouldReturnEmptyOptionalIfGenreByNameNotExists() {
+        Optional<Genre> genre = genreDao.getByName("novel123");
+        assertThat(genre).isEmpty();
     }
 
     @Test

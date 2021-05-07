@@ -6,7 +6,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.otus.istyazhkina.library.domain.Comment;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.CommentService;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public class CommentCommands {
         try {
             Comment comment = commentService.getCommentById(id);
             return comment.getContent();
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
@@ -45,7 +45,7 @@ public class CommentCommands {
         try {
             Comment comment = commentService.updateCommentContent(id, newContent);
             return String.format("Comment with id %s successfully updated. Comment is %s", comment.getId(), comment.getContent());
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
 
@@ -56,11 +56,10 @@ public class CommentCommands {
         try {
             commentService.addNewComment(content, bookId);
             return "Comment successfully added!";
-        } catch (NoEntityFoundInDataBaseException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
-
 
     @ShellMethod(value = "Delete comment by ID", key = {"delete comment"})
     public String deleteCommentById(@ShellOption long id) {

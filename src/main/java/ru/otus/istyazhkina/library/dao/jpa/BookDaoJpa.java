@@ -4,10 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 import ru.otus.istyazhkina.library.dao.BookDao;
 import ru.otus.istyazhkina.library.domain.Book;
-import ru.otus.istyazhkina.library.exceptions.NoEntityFoundInDataBaseException;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import java.util.List;
@@ -43,21 +41,16 @@ public class BookDaoJpa implements BookDao {
     }
 
     @Override
-    public Book getByTitle(String title) throws NoEntityFoundInDataBaseException {
+    public List<Book> getByTitle(String title) {
         TypedQuery<Book> query = em.createQuery("select a from Book a where a.title=:title", Book.class).setParameter("title", title);
-        try {
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            throw new NoEntityFoundInDataBaseException("No Book found by title " + title);
-        }
+        return query.getResultList();
     }
 
     @Override
     public List<Book> getAll() {
         return em.createQuery("select distinct a from Book a " +
                 "left join fetch a.author " +
-                "left join fetch a.genre " +
-                "left join fetch a.comments", Book.class).getResultList();
+                "left join fetch a.genre", Book.class).getResultList();
     }
 
     @Override

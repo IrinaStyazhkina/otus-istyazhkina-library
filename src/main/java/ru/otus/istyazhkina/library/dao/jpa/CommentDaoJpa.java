@@ -46,6 +46,6 @@ public class CommentDaoJpa implements CommentDao {
 
     @Override
     public List<Comment> getCommentsByBookId(long bookId) {
-        return em.createQuery("select a.comments from Book a where a.id=:id").setParameter("id", bookId).getResultList();
+        return em.createQuery("select a from Comment a where a.book.id=:id").setParameter("id", bookId).getResultList();
     }
 }
