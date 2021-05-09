@@ -1,22 +1,21 @@
 package ru.otus.istyazhkina.library.dao;
 
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.ConstraintException;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface GenreDao {
 
-    int insert(Genre genre) throws DuplicateDataException;
+    void insert(Genre genre);
 
-    int update(Genre genre) throws DuplicateDataException;
+    Genre update(Genre genre);
 
-    Genre getById(long id);
+    Optional<Genre> getById(long id);
 
     List<Genre> getAll();
 
-    int deleteById(long id) throws ConstraintException;
+    int deleteGenre(long id);
 
-    Genre getByName(String name);
+    Optional<Genre> getByName(String name);
 }

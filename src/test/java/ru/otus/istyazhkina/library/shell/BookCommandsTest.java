@@ -9,8 +9,7 @@ import org.springframework.shell.Shell;
 import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import java.util.Collections;
@@ -45,31 +44,31 @@ class BookCommandsTest {
     }
 
     @Test
-    void checkMessageWhileGettingBookByNotExistingId() {
-        Mockito.when(bookService.getBookById(1)).thenReturn(null);
+    void checkMessageWhileGettingBookByNotExistingId() throws DataOperationException {
+        Mockito.when(bookService.getBookById(1)).thenThrow(new DataOperationException("Book by provided ID not found in database"));
         Object res = shell.evaluate(() -> "book by id 1");
-        assertThat(res).isEqualTo("Book with id 1 is not found");
+        assertThat(res).isEqualTo("Book by provided ID not found in database");
     }
 
     @Test
-    void shouldReturnBookNameById() {
+    void shouldReturnBookNameById() throws DataOperationException {
         Mockito.when(bookService.getBookById(2)).thenReturn(new Book(2L, "Harry Potter", new Author(2L, "Joanne", "Rowling"), new Genre(1L, "fantasy")));
         Object res = shell.evaluate(() -> "book by id 2");
-        assertThat(res).isEqualTo("Harry Potter by Joanne Rowling");
+        assertThat(res).isEqualTo("Harry Potter");
     }
 
     @Test
     void checkMessageWhileGettingBookByNotExistingTitle() {
-        Mockito.when(bookService.getBookByName("not_found")).thenReturn(null);
+        Mockito.when(bookService.getBooksByTitle("not_found")).thenReturn(Collections.EMPTY_LIST);
         Object res = shell.evaluate(() -> "book by title not_found");
-        assertThat(res).isEqualTo("Book with title not_found is not found");
+        assertThat(res).isEqualTo("No books found by provided title");
     }
 
     @Test
     void shouldReturnBookIdByTitle() {
-        Mockito.when(bookService.getBookByName("1984")).thenReturn(new Book(4L, "1984", new Author(3L, "George", "Orwell"), new Genre(1L, "dystopia")));
+        Mockito.when(bookService.getBooksByTitle("1984")).thenReturn(List.of(new Book(4L, "1984", new Author(3L, "George", "Orwell"), new Genre(1L, "dystopia"))));
         Object res = shell.evaluate(() -> "book by title 1984");
-        assertThat(res).isEqualTo("Book's id is 4");
+        assertThat(res).isEqualTo("Id's of books with provided title:\n4");
     }
 
     @Test
@@ -94,16 +93,9 @@ class BookCommandsTest {
         assertThat(res).isEqualTo("Book with title 1984 successfully added!");
     }
 
-    @Test
-    void checkMessageOnDuplicateDataExceptionWhileAdd() {
-        DuplicateDataException e = new DuplicateDataException("Could not insert data in table, because book should be unique!");
-        Mockito.when(bookService.addNewBook("Childhood", "Lev", "Tolstoy", "novel")).thenThrow(e);
-        Object res = shell.evaluate(() -> "add book Childhood Lev Tolstoy novel");
-        assertThat(res).isEqualTo(e.getMessage());
-    }
 
     @Test
-    void checkMessageOnUpDateBook() {
+    void checkMessageOnUpDateBook() throws DataOperationException {
         Book book = new Book(4L, "1984", new Author(3L, "George", "Orwell"), new Genre(1L, "dystopia"));
         Mockito.when(bookService.updateBookTitle(4L, "1984")).thenReturn(book);
         Object res = shell.evaluate(() -> "update book title 4 1984");
@@ -111,8 +103,8 @@ class BookCommandsTest {
     }
 
     @Test
-    void checkMessageOnExceptionWhileUpdate() {
-        NoDataException e = new NoDataException("Can not update book's title because book with this id is not found");
+    void checkMessageOnExceptionWhileUpdate() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Book by provided ID not found in database");
         Mockito.when(bookService.updateBookTitle(3L, "exception")).thenThrow(e);
         Object res = shell.evaluate(() -> "update book title 3 exception");
         assertThat(res).isEqualTo(e.getMessage());

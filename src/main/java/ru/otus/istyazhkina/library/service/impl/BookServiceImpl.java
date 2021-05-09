@@ -2,15 +2,15 @@ package ru.otus.istyazhkina.library.service.impl;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.dao.BookDao;
+import ru.otus.istyazhkina.library.dao.GenreDao;
 import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
-import ru.otus.istyazhkina.library.service.AuthorService;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.BookService;
-import ru.otus.istyazhkina.library.service.GenreService;
 
 import java.util.List;
 
@@ -19,58 +19,58 @@ import java.util.List;
 public class BookServiceImpl implements BookService {
 
     private final BookDao bookDao;
-    private final AuthorService authorService;
-    private final GenreService genreService;
+    private final AuthorDao authorDao;
+    private final GenreDao genreDao;
 
     @Override
+    @Transactional(readOnly = true)
     public long getBooksCount() {
         return bookDao.count();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Book> getAllBooks() {
         return bookDao.getAll();
     }
 
     @Override
-    public Book getBookById(long id) {
-        return bookDao.getById(id);
+    @Transactional(readOnly = true)
+    public Book getBookById(long id) throws DataOperationException {
+        return bookDao.getById(id).orElseThrow(() -> new DataOperationException("Book by provided ID not found in database"));
     }
 
     @Override
-    public Book getBookByName(String name) {
+    @Transactional(readOnly = true)
+    public List<Book> getBooksByTitle(String name) {
         return bookDao.getByTitle(name);
     }
 
     @Override
-    public Book addNewBook(String bookTitle, String authorName, String authorSurname, String genreName) throws DuplicateDataException {
-        if (authorService.getAuthorByName(authorName, authorSurname) == null) {
-            authorService.addNewAuthor(authorName, authorSurname);
+    @Transactional
+    public Book addNewBook(String bookTitle, String authorName, String authorSurname, String genreName) {
+        if (authorDao.getByName(authorName, authorSurname).isEmpty()) {
+            authorDao.insert(new Author(authorName, authorSurname));
         }
-
-        if (genreService.getGenreByName(genreName) == null) {
-            genreService.addNewGenre(genreName);
+        if (genreDao.getByName(genreName).isEmpty()) {
+            genreDao.insert(new Genre(genreName));
         }
-
-        Author author = authorService.getAuthorByName(authorName, authorSurname);
-        Genre genre = genreService.getGenreByName(genreName);
-        Book book = new Book(bookTitle, author, genre);
+        Book book = new Book(bookTitle, authorDao.getByName(authorName, authorSurname).get(), genreDao.getByName(genreName).get());
         bookDao.insert(book);
-        return getBookByName(bookTitle);
+        return book;
     }
 
     @Override
-    public Book updateBookTitle(long id, String newTitle) throws NoDataException, DuplicateDataException {
-        Book bookToUpdate = bookDao.getById(id);
-        if (bookToUpdate == null) {
-            throw new NoDataException("Can not update book's title because book with this id is not found");
-        }
-        bookToUpdate.setTitle(newTitle);
-        bookDao.update(bookToUpdate);
-        return bookDao.getById(id);
+    @Transactional
+    public Book updateBookTitle(long id, String newTitle) throws DataOperationException {
+        Book book = bookDao.getById(id).orElseThrow(() -> new DataOperationException("Book by provided ID not found in database"));
+        book.setTitle(newTitle);
+        bookDao.update(book);
+        return book;
     }
 
     @Override
+    @Transactional
     public int deleteBookById(long id) {
         return bookDao.deleteById(id);
     }

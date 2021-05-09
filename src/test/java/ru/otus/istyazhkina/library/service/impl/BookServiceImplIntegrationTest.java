@@ -15,21 +15,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BookServiceImplIntegrationTest {
 
     @Autowired
-    BookService bookService;
+    private BookService bookService;
 
     @Autowired
-    BookDao bookDao;
+    private BookDao bookDao;
 
     @Autowired
-    GenreDao genreDao;
+    private GenreDao genreDao;
 
     @Autowired
-    AuthorDao authorDao;
+    private AuthorDao authorDao;
 
     @Test
     void shouldAddAuthorAndGenreAndBookWhileInsertIfTheyNotExist() {
-        assertThat(genreDao.getByName("play")).isNull();
-        assertThat(authorDao.getByName("Anton", "Chekhov")).isNull();
+        assertThat(genreDao.getByName("play")).isEmpty();
+        assertThat(authorDao.getByName("Anton", "Chekhov")).isEmpty();
 
         Book book = bookService.addNewBook("Seagull", "Anton", "Chekhov", "play");
         assertThat(genreDao.getByName("play")).isNotNull();

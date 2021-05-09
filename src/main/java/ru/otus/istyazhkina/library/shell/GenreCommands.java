@@ -5,9 +5,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.ConstraintException;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.GenreService;
 
 import java.util.List;
@@ -33,9 +31,12 @@ public class GenreCommands {
 
     @ShellMethod(value = "Get genre by ID", key = {"genre by id"})
     public String getGenreById(@ShellOption long id) {
-        Genre genre = genreService.getGenreById(id);
-        if (genre == null) return String.format("Genre with id %s is not found", id);
-        return genre.getName();
+        try {
+            Genre genre = genreService.getGenreById(id);
+            return genre.getName();
+        } catch (DataOperationException e) {
+            return e.getMessage();
+        }
     }
 
     @ShellMethod(value = "Update name of a genre by its ID", key = {"update genre"})
@@ -43,7 +44,7 @@ public class GenreCommands {
         try {
             Genre genre = genreService.updateGenresName(id, newName);
             return String.format("Genre with id %s successfully updated. Genre name is %s", genre.getId(), genre.getName());
-        } catch (NoDataException | DuplicateDataException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
 
@@ -54,16 +55,19 @@ public class GenreCommands {
         try {
             genreService.addNewGenre(name);
             return String.format("Genre with name %s successfully added!", name);
-        } catch (DuplicateDataException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
 
     @ShellMethod(value = "Get genre's ID by its name", key = {"genre by name"})
     public String getGenresId(@ShellOption String name) {
-        Genre genreByName = genreService.getGenreByName(name);
-        if (genreByName == null) return String.format("Genre with name %s is not found", name);
-        return String.format("Genre's id is %s", genreByName.getId());
+        try {
+            Genre genreByName = genreService.getGenreByName(name);
+            return String.format("Genre's id is %s", genreByName.getId());
+        } catch (DataOperationException e) {
+            return e.getMessage();
+        }
     }
 
     @ShellMethod(value = "Delete genre by ID", key = {"delete genre"})
@@ -71,8 +75,9 @@ public class GenreCommands {
         try {
             if (genreService.deleteGenre(id) == 1) {
                 return "Genre is successfully deleted!";
-            } else return "Sorry! We can not execute this operation!";
-        } catch (ConstraintException e) {
+            }
+            return "Deletion is not successful. Please check if provided genre id exists";
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }

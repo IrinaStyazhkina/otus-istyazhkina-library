@@ -5,6 +5,14 @@ spring:
     data: test_data.sql
     schema: schema.sql
 
+
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+
+    show-sql: true
+
   h2:
     console:
       path: /h2-console

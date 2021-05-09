@@ -5,8 +5,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import ru.otus.istyazhkina.library.domain.Book;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import java.util.List;
@@ -32,26 +31,32 @@ public class BookCommands {
 
     @ShellMethod(value = "Get book by ID", key = {"book by id"})
     public String getBookById(@ShellOption long id) {
-        Book book = bookService.getBookById(id);
-        if (book == null) return String.format("Book with id %s is not found", id);
-        return String.format("%s by %s", book.getTitle(), book.getAuthor());
+        try {
+            Book book = bookService.getBookById(id);
+            return String.format("%s", book.getTitle());
+        } catch (DataOperationException e) {
+            return e.getMessage();
+        }
     }
 
     @ShellMethod(value = "Get book's ID by its title", key = {"book by title"})
     public String getBooksId(@ShellOption String title) {
-        Book book = bookService.getBookByName(title);
-        if (book == null) return String.format("Book with title %s is not found", title);
-        return String.format("Book's id is %s", book.getId());
+        List<Book> booksByTitle = bookService.getBooksByTitle(title);
+        if (booksByTitle.size() == 0) {
+            return "No books found by provided title";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Id's of books with provided title:");
+        for (Book book : booksByTitle) {
+            sb.append("\n").append(book.getId());
+        }
+        return sb.toString();
     }
 
     @ShellMethod(value = "Add new book", key = {"add book"})
     public String addNewBook(@ShellOption String title, @ShellOption String authorName, @ShellOption String authorSurname, @ShellOption String genreName) {
-        try {
-            bookService.addNewBook(title, authorName, authorSurname, genreName);
-            return String.format("Book with title %s successfully added!", title);
-        } catch (DuplicateDataException e) {
-            return e.getMessage();
-        }
+        bookService.addNewBook(title, authorName, authorSurname, genreName);
+        return String.format("Book with title %s successfully added!", title);
     }
 
     @ShellMethod(value = "Update title of a book by its ID", key = {"update book title"})
@@ -59,7 +64,7 @@ public class BookCommands {
         try {
             Book book = bookService.updateBookTitle(id, newTitle);
             return String.format("Book with id %s is successfully updated. Book's title is %s ", book.getId(), book.getTitle());
-        } catch (DuplicateDataException | NoDataException e) {
+        } catch (DataOperationException e) {
             return e.getMessage();
         }
     }

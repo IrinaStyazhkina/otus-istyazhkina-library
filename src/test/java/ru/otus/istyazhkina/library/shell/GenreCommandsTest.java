@@ -7,9 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.shell.Shell;
 import ru.otus.istyazhkina.library.domain.Genre;
-import ru.otus.istyazhkina.library.exceptions.ConstraintException;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
 import ru.otus.istyazhkina.library.service.GenreService;
 
 import java.util.Collections;
@@ -41,57 +39,59 @@ class GenreCommandsTest {
     }
 
     @Test
-    void checkMessageWhileGettingGenreByNotExistingId() {
-        Mockito.when(genreService.getGenreById(1)).thenReturn(null);
+    void checkMessageWhileGettingGenreByNotExistingId() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Genre by provided ID not found in database");
+        Mockito.when(genreService.getGenreById(1)).thenThrow(e);
         Object res = shell.evaluate(() -> "genre by id 1");
-        assertThat(res).isEqualTo("Genre with id 1 is not found");
+        assertThat(res).isEqualTo(e.getMessage());
     }
 
     @Test
-    void shouldReturnGenreNameById() {
+    void shouldReturnGenreNameById() throws DataOperationException {
         Mockito.when(genreService.getGenreById(2)).thenReturn(new Genre(2L, "novel"));
         Object res = shell.evaluate(() -> "genre by id 2");
         assertThat(res).isEqualTo("novel");
     }
 
     @Test
-    void checkMessageWhileGettingGenreByNotExistingName() {
-        Mockito.when(genreService.getGenreByName("not_found")).thenReturn(null);
+    void checkMessageWhileGettingGenreByNotExistingName() throws DataOperationException {
+        DataOperationException e = new DataOperationException("No Genre found by name not_found");
+        Mockito.when(genreService.getGenreByName("not_found")).thenThrow(e);
         Object res = shell.evaluate(() -> "genre by name not_found");
-        assertThat(res).isEqualTo("Genre with name not_found is not found");
+        assertThat(res).isEqualTo(e.getMessage());
     }
 
     @Test
-    void shouldReturnGenreIdByName() {
+    void shouldReturnGenreIdByName() throws DataOperationException {
         Mockito.when(genreService.getGenreByName("found")).thenReturn(new Genre(2L, "novel"));
         Object res = shell.evaluate(() -> "genre by name found");
         assertThat(res).isEqualTo("Genre's id is 2");
     }
 
     @Test
-    void checkMessageOnDeleteGenre() {
+    void checkMessageOnDeleteGenre() throws DataOperationException {
         Mockito.when(genreService.deleteGenre(3)).thenReturn(1);
         Object res = shell.evaluate(() -> "delete genre 3");
         assertThat(res).isEqualTo("Genre is successfully deleted!");
     }
 
     @Test
-    void checkMessageOnDeleteByNotExistingId() {
+    void checkMessageOnDeleteByNotExistingId() throws DataOperationException {
         Mockito.when(genreService.deleteGenre(30)).thenReturn(0);
         Object res = shell.evaluate(() -> "delete genre 30");
-        assertThat(res).isEqualTo("Sorry! We can not execute this operation!");
+        assertThat(res).isEqualTo("Deletion is not successful. Please check if provided genre id exists");
     }
 
     @Test
-    void checkMessageOnConstraintExceptionWhileDelete() {
-        ConstraintException e = new ConstraintException("You can not delete this genre because exists book with this genre!");
+    void checkMessageOnConstraintWhileDelete() throws DataOperationException {
+        DataOperationException e = new DataOperationException("This operation is not allowed! In system exists book with this genre");
         Mockito.when(genreService.deleteGenre(20)).thenThrow(e);
         Object res = shell.evaluate(() -> "delete genre 20");
         assertThat(res).isEqualTo(e.getMessage());
     }
 
     @Test
-    void checkMessageWhileAddingNewGenre() {
+    void checkMessageWhileAddingNewGenre() throws DataOperationException {
         Genre genre = new Genre(5L, "detective");
         Mockito.when(genreService.addNewGenre("detective")).thenReturn(genre);
         Object res = shell.evaluate(() -> "add genre detective");
@@ -99,15 +99,15 @@ class GenreCommandsTest {
     }
 
     @Test
-    void checkMessageOnDuplicateDataExceptionWhileAdd() {
-        DuplicateDataException e = new DuplicateDataException("Could not insert data in table, because genre should be unique!");
+    void checkMessageIfSameEntityAlreadyExistsWhileAdd() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Genre with this name already exists in database");
         Mockito.when(genreService.addNewGenre("exception")).thenThrow(e);
         Object res = shell.evaluate(() -> "add genre exception");
         assertThat(res).isEqualTo(e.getMessage());
     }
 
     @Test
-    void checkMessageOnUpDateGenre() {
+    void checkMessageOnUpdateGenre() throws DataOperationException {
         Genre genre = new Genre(2L, "fiction");
         Mockito.when(genreService.updateGenresName(2L, "fiction")).thenReturn(genre);
         Object res = shell.evaluate(() -> "update genre 2 fiction");
@@ -115,8 +115,8 @@ class GenreCommandsTest {
     }
 
     @Test
-    void checkMessageOnExceptionWhileUpdate() {
-        NoDataException e = new NoDataException("Can not update genre's name because genre with this id is not found");
+    void checkMessageOnExceptionWhileUpdate() throws DataOperationException {
+        DataOperationException e = new DataOperationException("Can not update genre because genre with provided name already exists in database");
         Mockito.when(genreService.updateGenresName(3L, "exception")).thenThrow(e);
         Object res = shell.evaluate(() -> "update genre 3 exception");
         assertThat(res).isEqualTo(e.getMessage());

@@ -5,29 +5,29 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import ru.otus.istyazhkina.library.dao.AuthorDao;
+import ru.otus.istyazhkina.library.dao.CommentDao;
 import ru.otus.istyazhkina.library.exceptions.DataOperationException;
-import ru.otus.istyazhkina.library.service.AuthorService;
+import ru.otus.istyazhkina.library.service.CommentService;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
 @SpringBootTest
-class AuthorServiceImplTest {
+class CommentServiceImplTest {
 
     @MockBean
-    private AuthorDao authorDao;
+    private CommentDao commentDao;
 
     @Autowired
-    private AuthorService authorService;
+    private CommentService commentService;
 
     @Test
-    void shouldThrowDataOperationExceptionWhileUpdateNameIfIdNotExists() {
-        Mockito.when(authorDao.getById(1)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> authorService.updateAuthor(1, "Random_Name", "Random Surname"))
+    void shouldThrowDataOperationExceptionWhileUpdateTitleIfIdNotExists() {
+        Mockito.when(commentDao.getById(1)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> commentService.updateCommentContent(1, "Random_Content"))
                 .isInstanceOf(DataOperationException.class)
-                .hasMessage("Can not update author. Author by provided ID not found in database.");
+                .hasMessage("Can not update comment. Comment by provided ID not found in database.");
     }
+
 }

@@ -1,22 +1,21 @@
 package ru.otus.istyazhkina.library.dao;
 
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.ConstraintException;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AuthorDao {
 
-    long insert(Author author) throws DuplicateDataException;
+    void insert(Author author);
 
-    Author getById(long id);
+    Optional<Author> getById(long id);
 
     List<Author> getAll();
 
-    int update(Author author) throws DuplicateDataException;
+    Author update(Author author);
 
-    int deleteById(long id) throws ConstraintException;
+    int deleteAuthor(long id);
 
-    Author getByName(String name, String surname);
+    Optional<Author> getByName(String name, String surname);
 }

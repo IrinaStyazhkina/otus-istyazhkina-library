@@ -2,11 +2,12 @@ package ru.otus.istyazhkina.library.service.impl;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.otus.istyazhkina.library.dao.AuthorDao;
 import ru.otus.istyazhkina.library.domain.Author;
-import ru.otus.istyazhkina.library.exceptions.ConstraintException;
-import ru.otus.istyazhkina.library.exceptions.DuplicateDataException;
-import ru.otus.istyazhkina.library.exceptions.NoDataException;
+import ru.otus.istyazhkina.library.exceptions.DataOperationException;
+import ru.otus.istyazhkina.library.exceptions.ProhibitedDeletionException;
+import ru.otus.istyazhkina.library.exceptions.SameEntityAlreadyExistsException;
 import ru.otus.istyazhkina.library.service.AuthorService;
 
 import java.util.List;
@@ -18,50 +19,56 @@ public class AuthorServiceImpl implements AuthorService {
     private final AuthorDao authorDao;
 
     @Override
+    @Transactional(readOnly = true)
     public List<Author> getAllAuthors() {
         return authorDao.getAll();
     }
 
     @Override
-    public Author getAuthorById(long id) {
-        return authorDao.getById(id);
+    @Transactional(readOnly = true)
+    public Author getAuthorById(long id) throws DataOperationException {
+        return authorDao.getById(id).orElseThrow(() -> new DataOperationException("Author by provided ID not found in database"));
     }
 
     @Override
-    public Author getAuthorByName(String name, String surname) {
-        return authorDao.getByName(name, surname);
+    @Transactional(readOnly = true)
+    public Author getAuthorByName(String name, String surname) throws DataOperationException {
+        return authorDao.getByName(name, surname).orElseThrow(() -> new DataOperationException("No author found by provided name"));
     }
 
     @Override
-    public Author addNewAuthor(String name, String surname) throws DuplicateDataException {
-        authorDao.insert(new Author(name, surname));
-        return getAuthorByName(name, surname);
-    }
-
-    @Override
-    public Author updateAuthorsName(long id, String newName) throws NoDataException, DuplicateDataException {
-        Author author = getAuthorById(id);
-        if (author == null) {
-            throw new NoDataException("Can not update author's name because author with this id is not found");
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Author addNewAuthor(String name, String surname) throws DataOperationException {
+        try {
+            Author author = new Author(name, surname);
+            authorDao.insert(author);
+            return author;
+        } catch (SameEntityAlreadyExistsException e) {
+            throw new DataOperationException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = DataOperationException.class)
+    public Author updateAuthor(long id, String newName, String newSurname) throws DataOperationException {
+        Author author = authorDao.getById(id).orElseThrow(() -> new DataOperationException("Can not update author. Author by provided ID not found in database."));
         author.setName(newName);
-        authorDao.update(author);
-        return authorDao.getById(id);
-    }
-
-    @Override
-    public Author updateAuthorsSurname(long id, String newSurname) throws NoDataException, DuplicateDataException {
-        Author author = getAuthorById(id);
-        if (author == null) {
-            throw new NoDataException("Can not update author's surname because author with this id is not found");
-        }
         author.setSurname(newSurname);
-        authorDao.update(author);
-        return authorDao.getById(id);
+        try {
+            authorDao.update(author);
+        } catch (SameEntityAlreadyExistsException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
+        return author;
     }
 
     @Override
-    public int deleteAuthor(long id) throws ConstraintException {
-        return authorDao.deleteById(id);
+    @Transactional(rollbackFor = DataOperationException.class)
+    public int deleteAuthor(long id) throws DataOperationException {
+        try {
+            return authorDao.deleteAuthor(id);
+        } catch (ProhibitedDeletionException e) {
+            throw new DataOperationException(e.getMessage(), e);
+        }
     }
 }
