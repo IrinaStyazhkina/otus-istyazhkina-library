@@ -1,13 +1,14 @@
 package ru.otus.istyazhkina.library.service.impl;
 
 import lombok.AllArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.otus.istyazhkina.library.dao.BookDao;
-import ru.otus.istyazhkina.library.dao.CommentDao;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Comment;
 import ru.otus.istyazhkina.library.exceptions.DataOperationException;
+import ru.otus.istyazhkina.library.repository.BookRepository;
+import ru.otus.istyazhkina.library.repository.CommentRepository;
 import ru.otus.istyazhkina.library.service.CommentService;
 
 import java.util.List;
@@ -16,48 +17,50 @@ import java.util.List;
 @AllArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
-    private final CommentDao commentDao;
-    private final BookDao bookDao;
+    private final CommentRepository commentRepository;
+    private final BookRepository bookRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<Comment> getAllComments() {
-        return commentDao.getAll();
+        return commentRepository.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Comment getCommentById(long id) throws DataOperationException {
-        return commentDao.getById(id).orElseThrow(() -> new DataOperationException("Comment by provided ID not found in database"));
-    }
-
-    @Override
-    @Transactional(rollbackFor = DataOperationException.class)
-    public Comment addNewComment(String content, long bookId) throws DataOperationException {
-        Book book = bookDao.getById(bookId).orElseThrow(() -> new DataOperationException("Can not add new Comment. Book by provided id is not found!"));
-        Comment comment = new Comment(content, book);
-        commentDao.insert(new Comment(content, book));
-        return comment;
-    }
-
-    @Override
-    @Transactional(rollbackFor = DataOperationException.class)
-    public Comment updateCommentContent(long id, String newContent) throws DataOperationException {
-        Comment comment = commentDao.getById(id).orElseThrow(() -> new DataOperationException("Can not update comment. Comment by provided ID not found in database."));
-        comment.setContent(newContent);
-        commentDao.update(comment);
-        return comment;
+        return commentRepository.findById(id).orElseThrow(() -> new DataOperationException("Comment by provided ID not found"));
     }
 
     @Override
     @Transactional
-    public int deleteComment(long id) {
-        return commentDao.deleteComment(id);
+    public Comment addNewComment(String content, long bookId) throws DataOperationException {
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new DataOperationException("Can not add new Comment. Book by provided id is not found!"));
+        Comment comment = new Comment(content, book);
+        return commentRepository.save(new Comment(content, book));
+    }
+
+    @Override
+    @Transactional
+    public Comment updateCommentContent(long id, String newContent) throws DataOperationException {
+        Comment comment = commentRepository.findById(id).orElseThrow(() -> new DataOperationException("Can not update comment. Comment by provided ID not found"));
+        comment.setContent(newContent);
+        return commentRepository.save(comment);
+    }
+
+    @Override
+    @Transactional(rollbackFor = DataOperationException.class)
+    public void deleteComment(long id) throws DataOperationException {
+        try {
+            commentRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new DataOperationException("There is no comment with provided id");
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Comment> getCommentsByBookId(long bookId) {
-        return commentDao.getCommentsByBookId(bookId);
+        return commentRepository.findAllByBookId(bookId);
     }
 }

@@ -24,7 +24,7 @@ public class BookCommands {
         }
         StringBuilder sb = new StringBuilder();
         for (Book book : allBooks) {
-            sb.append(String.format("%s\t|\t%s\t|\t%s\t|\t%s\n", book.getId(), book.getTitle(), book.getAuthor(), book.getGenre()));
+            sb.append(book).append("\n");
         }
         return sb.toString();
     }
@@ -71,9 +71,12 @@ public class BookCommands {
 
     @ShellMethod(value = "Delete book by ID", key = {"delete book"})
     public String deleteBookById(@ShellOption long id) {
-        if (bookService.deleteBookById(id) == 1) {
+        try {
+            bookService.deleteBookById(id);
             return "Book is successfully deleted!";
-        } else return "Sorry! We can not execute this operation!";
+        } catch (DataOperationException e) {
+            return e.getMessage();
+        }
     }
 
     @ShellMethod(value = "Get count of all books", key = {"books count"})

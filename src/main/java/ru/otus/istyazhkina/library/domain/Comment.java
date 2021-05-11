@@ -58,4 +58,9 @@ public class Comment {
     public int hashCode() {
         return Objects.hash(id, content, book);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s\t|\t%s\t|\t%s", id, content, book.getTitle());
+    }
 }

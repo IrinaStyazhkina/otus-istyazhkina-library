@@ -72,17 +72,17 @@ class BookCommandsTest {
     }
 
     @Test
-    void checkMessageOnDeleteBook() {
-        Mockito.when(bookService.deleteBookById(3)).thenReturn(1);
+    void checkMessageOnDeleteBook() throws DataOperationException {
+        Mockito.doNothing().when(bookService).deleteBookById(3);
         Object res = shell.evaluate(() -> "delete book 3");
         assertThat(res).isEqualTo("Book is successfully deleted!");
     }
 
     @Test
-    void checkMessageOnDeleteByNotExistingId() {
-        Mockito.when(bookService.deleteBookById(30)).thenReturn(0);
+    void checkMessageOnDeleteByNotExistingId() throws DataOperationException {
+        Mockito.doThrow(new DataOperationException("There is no book with provided id")).when(bookService).deleteBookById(30);
         Object res = shell.evaluate(() -> "delete book 30");
-        assertThat(res).isEqualTo("Sorry! We can not execute this operation!");
+        assertThat(res).isEqualTo("There is no book with provided id");
     }
 
     @Test

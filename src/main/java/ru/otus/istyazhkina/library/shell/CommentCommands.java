@@ -25,7 +25,7 @@ public class CommentCommands {
         }
         StringBuilder sb = new StringBuilder();
         for (Comment comment : allComments) {
-            sb.append(String.format("%s\t|\t%s\t|\t%s\n", comment.getId(), comment.getContent(), comment.getBook().getTitle()));
+            sb.append(comment).append("\n");
         }
         return sb.toString();
     }
@@ -34,7 +34,7 @@ public class CommentCommands {
     public String getCommentById(@ShellOption long id) {
         try {
             Comment comment = commentService.getCommentById(id);
-            return comment.getContent();
+            return comment.toString();
         } catch (DataOperationException e) {
             return e.getMessage();
         }
@@ -63,10 +63,12 @@ public class CommentCommands {
 
     @ShellMethod(value = "Delete comment by ID", key = {"delete comment"})
     public String deleteCommentById(@ShellOption long id) {
-        if (commentService.deleteComment(id) == 1) {
+        try {
+            commentService.deleteComment(id);
             return "Comment is successfully deleted!";
+        } catch (DataOperationException e) {
+            return e.getMessage();
         }
-        return "Deletion is not successful. Please check if provided comment id exists";
     }
 
     @ShellMethod(value = "Get all comments for book by book id", key = {"comments by book id"})
@@ -75,7 +77,7 @@ public class CommentCommands {
         StringBuilder sb = new StringBuilder();
         sb.append("Comments:\n");
         for (Comment comment : allComments) {
-            sb.append(comment.getContent() + "\n");
+            sb.append(comment).append("\n");
         }
         return sb.toString();
     }

@@ -47,10 +47,10 @@ class AuthorCommandsTest {
     }
 
     @Test
-    void shouldReturnAuthorNameById() throws DataOperationException {
+    void shouldReturnAuthorById() throws DataOperationException {
         Mockito.when(authorService.getAuthorById(2)).thenReturn(new Author(2L, "Alexander", "Pushkin"));
         Object res = shell.evaluate(() -> "author by id 2");
-        assertThat(res).isEqualTo("Alexander Pushkin");
+        assertThat(res).isEqualTo("2\t|\tAlexander\t|\tPushkin");
     }
 
     @Test
@@ -62,44 +62,28 @@ class AuthorCommandsTest {
     }
 
     @Test
-    void shouldReturnAuthorIdByName() throws DataOperationException {
+    void shouldReturnAuthorByName() throws DataOperationException {
         Mockito.when(authorService.getAuthorByName("Alexander", "Pushkin")).thenReturn(new Author(2L, "Alexander", "Pushkin"));
         Object res = shell.evaluate(() -> "author by name Alexander Pushkin");
-        assertThat(res).isEqualTo("Author's id is 2");
+        assertThat(res).isEqualTo("2\t|\tAlexander\t|\tPushkin");
     }
 
     @Test
     void checkMessageOnDeleteAuthor() throws DataOperationException {
-        Mockito.when(authorService.deleteAuthor(3)).thenReturn(1);
+        Mockito.doNothing().when(authorService).deleteAuthor(3);
         Object res = shell.evaluate(() -> "delete author 3");
         assertThat(res).isEqualTo("Author is successfully deleted!");
     }
 
     @Test
-    void checkMessageOnDeleteByNotExistingId() throws DataOperationException {
-        Mockito.when(authorService.deleteAuthor(30)).thenReturn(0);
+    void checkMessageOnExceptionWhileDelete() throws DataOperationException {
+        Mockito.doThrow(new DataOperationException("There is no author with provided id")).when(authorService).deleteAuthor(30);
         Object res = shell.evaluate(() -> "delete author 30");
-        assertThat(res).isEqualTo("Deletion is not successful. Please check if provided author id exists");
+        assertThat(res).isEqualTo("There is no author with provided id");
     }
 
     @Test
-    void checkMessageOnConstraintWhileDelete() throws DataOperationException {
-        DataOperationException e = new DataOperationException("This operation is not allowed! In system exists book with this author");
-        Mockito.when(authorService.deleteAuthor(20)).thenThrow(e);
-        Object res = shell.evaluate(() -> "delete author 20");
-        assertThat(res).isEqualTo(e.getMessage());
-    }
-
-    @Test
-    void checkMessageWhileAddingNewAuthor() throws DataOperationException {
-        Author author = new Author(5L, "Fedor", "Dostoevskiy");
-        Mockito.when(authorService.addNewAuthor("Fedor", "Dostoevskiy")).thenReturn(author);
-        Object res = shell.evaluate(() -> "add author Fedor Dostoevskiy");
-        assertThat(res).isEqualTo("Author with name Fedor Dostoevskiy successfully added!");
-    }
-
-    @Test
-    void checkMessageIfSameEntityAlreadyExistsWhileAdd() throws DataOperationException {
+    void checkMessageOnExceptionWhileAdd() throws DataOperationException {
         DataOperationException e = new DataOperationException("Author with this name and surname already exists in database");
         Mockito.when(authorService.addNewAuthor("duplicate", "exception")).thenThrow(e);
         Object res = shell.evaluate(() -> "add author duplicate exception");

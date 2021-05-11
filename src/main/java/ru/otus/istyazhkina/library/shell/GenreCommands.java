@@ -24,7 +24,7 @@ public class GenreCommands {
         }
         StringBuilder sb = new StringBuilder();
         for (Genre genre : allGenres) {
-            sb.append(String.format("%s\t|\t%s \n", genre.getId(), genre.getName()));
+            sb.append(genre).append("\n");
         }
         return sb.toString();
     }
@@ -33,7 +33,7 @@ public class GenreCommands {
     public String getGenreById(@ShellOption long id) {
         try {
             Genre genre = genreService.getGenreById(id);
-            return genre.getName();
+            return genre.toString();
         } catch (DataOperationException e) {
             return e.getMessage();
         }
@@ -61,10 +61,10 @@ public class GenreCommands {
     }
 
     @ShellMethod(value = "Get genre's ID by its name", key = {"genre by name"})
-    public String getGenresId(@ShellOption String name) {
+    public String getGenreByName(@ShellOption String name) {
         try {
             Genre genreByName = genreService.getGenreByName(name);
-            return String.format("Genre's id is %s", genreByName.getId());
+            return genreByName.toString();
         } catch (DataOperationException e) {
             return e.getMessage();
         }
@@ -73,12 +73,10 @@ public class GenreCommands {
     @ShellMethod(value = "Delete genre by ID", key = {"delete genre"})
     public String deleteGenreById(@ShellOption long id) {
         try {
-            if (genreService.deleteGenre(id) == 1) {
-                return "Genre is successfully deleted!";
-            }
-            return "Deletion is not successful. Please check if provided genre id exists";
+            genreService.deleteGenre(id);
         } catch (DataOperationException e) {
             return e.getMessage();
         }
+        return "Genre is successfully deleted!";
     }
 }
