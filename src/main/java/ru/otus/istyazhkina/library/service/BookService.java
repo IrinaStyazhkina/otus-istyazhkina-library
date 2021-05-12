@@ -19,5 +19,5 @@ public interface BookService {
 
     Book updateBookTitle(long id, String newTitle) throws DataOperationException;
 
-    int deleteBookById(long id);
+    void deleteBookById(long id) throws DataOperationException;
 }

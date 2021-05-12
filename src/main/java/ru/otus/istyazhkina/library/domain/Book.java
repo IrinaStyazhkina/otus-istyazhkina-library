@@ -63,6 +63,6 @@ public class Book {
 
     @Override
     public String toString() {
-        return title + " by " + author.getName() + " " + author.getSurname() + " with genre " + genre.getName();
+        return String.format("%s\t|\t%s\t|\t%s\t|\t%s", id, title, author.getName() + " " + author.getSurname(), genre.getName());
     }
 }

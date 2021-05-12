@@ -3,10 +3,11 @@ package ru.otus.istyazhkina.library.service.impl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.otus.istyazhkina.library.dao.AuthorDao;
-import ru.otus.istyazhkina.library.dao.BookDao;
-import ru.otus.istyazhkina.library.dao.GenreDao;
+import org.springframework.test.annotation.DirtiesContext;
 import ru.otus.istyazhkina.library.domain.Book;
+import ru.otus.istyazhkina.library.repository.AuthorRepository;
+import ru.otus.istyazhkina.library.repository.BookRepository;
+import ru.otus.istyazhkina.library.repository.GenreRepository;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,22 +19,23 @@ class BookServiceImplIntegrationTest {
     private BookService bookService;
 
     @Autowired
-    private BookDao bookDao;
+    private BookRepository bookRepository;
 
     @Autowired
-    private GenreDao genreDao;
+    private GenreRepository genreRepository;
 
     @Autowired
-    private AuthorDao authorDao;
+    private AuthorRepository authorRepository;
 
     @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldAddAuthorAndGenreAndBookWhileInsertIfTheyNotExist() {
-        assertThat(genreDao.getByName("play")).isEmpty();
-        assertThat(authorDao.getByName("Anton", "Chekhov")).isEmpty();
+        assertThat(genreRepository.findByName("play")).isEmpty();
+        assertThat(authorRepository.findByNameAndSurname("Anton", "Chekhov")).isEmpty();
 
         Book book = bookService.addNewBook("Seagull", "Anton", "Chekhov", "play");
-        assertThat(genreDao.getByName("play")).isNotNull();
-        assertThat(authorDao.getByName("Anton", "Chekhov")).isNotNull();
+        assertThat(genreRepository.findByName("play")).isNotNull();
+        assertThat(authorRepository.findByNameAndSurname("Anton", "Chekhov")).isNotNull();
         assertThat(book.getTitle()).isEqualTo("Seagull");
         assertThat(book.getGenre().getName()).isEqualTo("play");
         assertThat(book.getAuthor().getName()).isEqualTo("Anton");

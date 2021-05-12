@@ -36,7 +36,7 @@ public class Genre {
 
     @Override
     public String toString() {
-        return name;
+        return String.format("%s\t|\t%s", id, name);
     }
 
     @Override

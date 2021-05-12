@@ -17,5 +17,5 @@ public interface AuthorService {
 
     Author updateAuthor(long id, String newName, String newSurname) throws DataOperationException;
 
-    int deleteAuthor(long id) throws DataOperationException;
+    void deleteAuthor(long id) throws DataOperationException;
 }

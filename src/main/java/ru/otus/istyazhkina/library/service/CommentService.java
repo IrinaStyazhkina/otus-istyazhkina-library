@@ -15,7 +15,7 @@ public interface CommentService {
 
     Comment updateCommentContent(long id, String newContent) throws DataOperationException;
 
-    int deleteComment(long id);
+    void deleteComment(long id) throws DataOperationException;
 
     List<Comment> getCommentsByBookId(long bookId);
 }

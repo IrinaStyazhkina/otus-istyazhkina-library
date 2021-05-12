@@ -40,7 +40,7 @@ public class Author {
 
     @Override
     public String toString() {
-        return name + " " + surname;
+        return String.format("%s\t|\t%s\t|\t%s", id, name, surname);
     }
 
     @Override

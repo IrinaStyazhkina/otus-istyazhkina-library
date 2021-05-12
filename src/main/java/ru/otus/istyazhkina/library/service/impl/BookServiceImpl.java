@@ -1,15 +1,16 @@
 package ru.otus.istyazhkina.library.service.impl;
 
 import lombok.AllArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.otus.istyazhkina.library.dao.AuthorDao;
-import ru.otus.istyazhkina.library.dao.BookDao;
-import ru.otus.istyazhkina.library.dao.GenreDao;
 import ru.otus.istyazhkina.library.domain.Author;
 import ru.otus.istyazhkina.library.domain.Book;
 import ru.otus.istyazhkina.library.domain.Genre;
 import ru.otus.istyazhkina.library.exceptions.DataOperationException;
+import ru.otus.istyazhkina.library.repository.AuthorRepository;
+import ru.otus.istyazhkina.library.repository.BookRepository;
+import ru.otus.istyazhkina.library.repository.GenreRepository;
 import ru.otus.istyazhkina.library.service.BookService;
 
 import java.util.List;
@@ -18,60 +19,64 @@ import java.util.List;
 @AllArgsConstructor
 public class BookServiceImpl implements BookService {
 
-    private final BookDao bookDao;
-    private final AuthorDao authorDao;
-    private final GenreDao genreDao;
+    private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
+    private final GenreRepository genreRepository;
 
     @Override
     @Transactional(readOnly = true)
     public long getBooksCount() {
-        return bookDao.count();
+        return bookRepository.count();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Book> getAllBooks() {
-        return bookDao.getAll();
+        return bookRepository.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Book getBookById(long id) throws DataOperationException {
-        return bookDao.getById(id).orElseThrow(() -> new DataOperationException("Book by provided ID not found in database"));
+        return bookRepository.findById(id).orElseThrow(() -> new DataOperationException("Book by provided ID not found"));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Book> getBooksByTitle(String name) {
-        return bookDao.getByTitle(name);
+        return bookRepository.findByTitle(name);
     }
 
     @Override
     @Transactional
     public Book addNewBook(String bookTitle, String authorName, String authorSurname, String genreName) {
-        if (authorDao.getByName(authorName, authorSurname).isEmpty()) {
-            authorDao.insert(new Author(authorName, authorSurname));
+        if (authorRepository.findByNameAndSurname(authorName, authorSurname).isEmpty()) {
+            authorRepository.save(new Author(authorName, authorSurname));
         }
-        if (genreDao.getByName(genreName).isEmpty()) {
-            genreDao.insert(new Genre(genreName));
+        if (genreRepository.findByName(genreName).isEmpty()) {
+            genreRepository.save(new Genre(genreName));
         }
-        Book book = new Book(bookTitle, authorDao.getByName(authorName, authorSurname).get(), genreDao.getByName(genreName).get());
-        bookDao.insert(book);
+        Book book = new Book(bookTitle, authorRepository.findByNameAndSurname(authorName, authorSurname).get(), genreRepository.findByName(genreName).get());
+        bookRepository.save(book);
         return book;
     }
 
     @Override
     @Transactional
     public Book updateBookTitle(long id, String newTitle) throws DataOperationException {
-        Book book = bookDao.getById(id).orElseThrow(() -> new DataOperationException("Book by provided ID not found in database"));
+        Book book = bookRepository.findById(id).orElseThrow(() -> new DataOperationException("Book by provided ID not found"));
         book.setTitle(newTitle);
-        bookDao.update(book);
+        bookRepository.save(book);
         return book;
     }
 
     @Override
-    @Transactional
-    public int deleteBookById(long id) {
-        return bookDao.deleteById(id);
+    @Transactional(rollbackFor = DataOperationException.class)
+    public void deleteBookById(long id) throws DataOperationException {
+        try {
+            bookRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new DataOperationException("There is no book with provided id");
+        }
     }
 }

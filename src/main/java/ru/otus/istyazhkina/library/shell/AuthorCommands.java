@@ -24,7 +24,7 @@ public class AuthorCommands {
         }
         StringBuilder sb = new StringBuilder();
         for (Author author : allAuthors) {
-            sb.append(String.format("%s\t|\t%s\t|\t%s\n", author.getId(), author.getName(), author.getSurname()));
+            sb.append(author).append("\n");
         }
         return sb.toString();
     }
@@ -33,17 +33,17 @@ public class AuthorCommands {
     public String getAuthorById(@ShellOption long id) {
         try {
             Author author = authorService.getAuthorById(id);
-            return String.format("%s %s", author.getName(), author.getSurname());
+            return author.toString();
         } catch (DataOperationException e) {
             return e.getMessage();
         }
     }
 
     @ShellMethod(value = "Get author's ID by his name and surname", key = {"author by name"})
-    public String getAuthorsId(@ShellOption String name, String surname) {
+    public String getAuthorByName(@ShellOption String name, String surname) {
         try {
             Author authorByName = authorService.getAuthorByName(name, surname);
-            return String.format("Author's id is %s", authorByName.getId());
+            return authorByName.toString();
         } catch (DataOperationException e) {
             return e.getMessage();
         }
@@ -72,10 +72,9 @@ public class AuthorCommands {
     @ShellMethod(value = "Delete author by ID", key = {"delete author"})
     public String deleteAuthorById(@ShellOption long id) {
         try {
-            if (authorService.deleteAuthor(id) == 1) {
-                return "Author is successfully deleted!";
-            }
-            return "Deletion is not successful. Please check if provided author id exists";
+            authorService.deleteAuthor(id);
+            return "Author is successfully deleted!";
+
         } catch (DataOperationException e) {
             return e.getMessage();
         }

@@ -55,22 +55,22 @@ class CommentCommandsTest {
     void shouldReturnCommentById() throws DataOperationException {
         Mockito.when(commentService.getCommentById(2)).thenReturn(new Comment(2L, "test comment", existingBook));
         Object res = shell.evaluate(() -> "comment by id 2");
-        assertThat(res).isEqualTo("test comment");
+        assertThat(res).isEqualTo("2\t|\ttest comment\t|\tAnna Karenina");
     }
 
-    @Test
-    void checkMessageOnDeleteComment() {
-        Mockito.when(commentService.deleteComment(3)).thenReturn(1);
-        Object res = shell.evaluate(() -> "delete comment 3");
-        assertThat(res).isEqualTo("Comment is successfully deleted!");
-    }
-
-    @Test
-    void checkMessageOnDeleteByNotExistingId() {
-        Mockito.when(commentService.deleteComment(30)).thenReturn(0);
-        Object res = shell.evaluate(() -> "delete comment 30");
-        assertThat(res).isEqualTo("Deletion is not successful. Please check if provided comment id exists");
-    }
+//    @Test
+//    void checkMessageOnDeleteComment() {
+//        Mockito.when(commentService.deleteComment(3)).thenReturn(1);
+//        Object res = shell.evaluate(() -> "delete comment 3");
+//        assertThat(res).isEqualTo("Comment is successfully deleted!");
+//    }
+//
+//    @Test
+//    void checkMessageOnDeleteByNotExistingId() {
+//        Mockito.when(commentService.deleteComment(30)).thenReturn(0);
+//        Object res = shell.evaluate(() -> "delete comment 30");
+//        assertThat(res).isEqualTo("Deletion is not successful. Please check if provided comment id exists");
+//    }
 
     @Test
     void checkMessageWhileAddingNewComment() throws DataOperationException {
@@ -107,7 +107,8 @@ class CommentCommandsTest {
     void shouldReturnCommentsByBookId() {
         Mockito.when(commentService.getCommentsByBookId(1L)).thenReturn(List.of(new Comment(1L, "comment1", existingBook), new Comment(2L, "comment2", existingBook)));
         Object res = shell.evaluate(() -> "comments by book id 1");
-        assertThat(res).isEqualTo("Comments:\ncomment1\ncomment2\n");
+        assertThat(res).isEqualTo("Comments:\n" +
+                "1\t|\tcomment1\t|\tAnna Karenina\n" +
+                "2\t|\tcomment2\t|\tAnna Karenina\n");
     }
-
 }

@@ -17,5 +17,5 @@ public interface GenreService {
 
     Genre updateGenresName(long id, String newName) throws DataOperationException;
 
-    int deleteGenre(long id) throws DataOperationException;
+    void deleteGenre(long id) throws DataOperationException;
 }
